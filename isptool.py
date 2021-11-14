@@ -20,7 +20,7 @@ CMD_BYTE_CHANNEL_BIT2_CLEAR = 0x84
 CMD_BYTE_CHANNEL_BIT2_SET = 0x85
 
 REG_PM_UARTDISABLE = 0xe12  # 0x1c24
-PM_UARTDISABLE_BIT = 11
+PM_UARTDISABLE_BIT = 1 << 11
 REG_PM_CHIPID = 0x1ecc  # 0x3d98
 
 
@@ -60,9 +60,13 @@ def set_channel(channel):
     i2c.transfer(i2caddr, txfr)
 
 
+def create_set_address_message_bytes(addr):
+    return [0x10, (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff]
+
+
 def set_address(addr):
     # txfr = [I2C.Message([0x10, 0x00, 0x00, 0x30, 0x00])]
-    txfr = [I2C.Message([0x10, (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff])]
+    txfr = [I2C.Message(create_set_address_message_bytes(addr))]
     i2c.transfer(i2caddr, txfr)
 
 
@@ -80,6 +84,15 @@ def read_pm_word(i2c, bank):
     msgs = [I2C.Message([0, 0], read=True)]
     i2c.transfer(i2caddr, msgs)
     return msgs[0].data[0] | msgs[0].data[1] << 8
+
+
+def write_pm_word(i2c, bank, word):
+    set_channel(CHANNEL_PM)
+    data = create_set_address_message_bytes(bank)
+    data.append(word & 0xff)
+    data.append((word >> 8) & 0xff)
+    msgs = [I2C.Message(data)]
+    i2c.transfer(i2caddr, msgs)
 
 
 if __name__ == '__main__':
@@ -106,8 +119,12 @@ if __name__ == '__main__':
     else:
         print("Unknown chip id: %02x" % chipid)
 
+    # Disable the UART
     uartdisable = read_pm_word(i2c, REG_PM_UARTDISABLE)
-    print("UART DISABLE: %04x" % uartdisable)
+    write_pm_word(i2c, REG_PM_UARTDISABLE, uartdisable & ~PM_UARTDISABLE_BIT)
+
+    # Reenable UART
+    write_pm_word(i2c, REG_PM_UARTDISABLE, uartdisable | PM_UARTDISABLE_BIT)
 
     # Disconnect
     disconnect()
