@@ -2,7 +2,8 @@
 from periphery import I2C
 
 chipids = {
-    0xf0: "infinity2m - SSD20x"
+    0xf0: "infinity2m - SSD20x",
+    0xf5: "pioneer3 - SSD212",
 }
 
 i2caddr = 0x59
@@ -83,6 +84,13 @@ if __name__ == '__main__':
     serial_debug_handshake()
 
     chipid = read_pm_byte(i2c, REG_PM_CHIPID)
-    print("Chip id: %s (%02x)" % (chipids[chipid], chipid))
+
+    if chipid in chipids:
+        print("Chip id: %s (%02x)" % (chipids[chipid], chipid))
+    else:
+        print("Unknown chip id: %02x" % chipid)
+
+    # Disconnect
+    disconnect()
 
     i2c.close()
