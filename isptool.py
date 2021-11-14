@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 from periphery import I2C
 
 chipids = {
@@ -72,7 +73,12 @@ def read_pm_byte(i2c, bank):
 
 
 if __name__ == '__main__':
-    i2c = I2C("/dev/i2c-4")
+    parser = argparse.ArgumentParser(description='MStar/SigmaStar i2c ISP tool.')
+    parser.add_argument('--i2cdev', type=str, required=True, help='Path to the i2cdev file')
+
+    args = parser.parse_args()
+
+    i2c = I2C(args.i2cdev)
 
     # The vendor tools seem to do a handshake then a disconnect
     # maybe to make sure everything is in sync. Not sure if
