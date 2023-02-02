@@ -127,6 +127,7 @@ class IspShell(cmd.Cmd):
     def do_rrb(self, arg):
         """Read a byte from a register"""
         print("yo")
+        print(arg)
 
     def do_rrw(self, arg):
         """Read a word from a register"""
